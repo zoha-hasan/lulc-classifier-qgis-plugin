@@ -125,3 +125,9 @@ The final exported shapefile contains polygon features with two attributes:
 - Vegetation is classified as a single class; distinguishing agriculture from natural vegetation was evaluated but found unreliable without multi-date (temporal) imagery, so it was not included.
 
 ---
+
+## License
+
+This project is licensed under the MIT License, see the LINCENSE file for details.
+
+---
