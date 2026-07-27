@@ -88,11 +88,43 @@ class ClassificationTask(QgsTask):
                 fileNamePrefix=export_filename,
                 fileFormat='SHP'
             )
+
+
             task.start()
 
+            elapsed_seconds = 0
+            poll_interval = 10
+            stuck_warning_threshold = 900      
+            hard_timeout = 3600                
+
+            last_state = None
+
             while task.active():
-                report("Export running on Google Earth Engine servers...")
-                time.sleep(10)
+                status = task.status()
+                current_state = status.get('state', 'UNKNOWN')
+
+                if current_state != last_state:
+                    report(f"Export status: {current_state}...")
+                    last_state = current_state
+
+                if current_state in ('UNSUBMITTED', 'READY') and elapsed_seconds >= stuck_warning_threshold:
+                    report(
+                        f"Export still queued after {elapsed_seconds // 60} min — "
+                        "this usually means your GEE project has hit its compute quota. "
+                        "Check code.earthengine.google.com/tasks or your Cloud Console quota page."
+                    )
+
+                if elapsed_seconds >= hard_timeout:
+                    task.cancel()
+                    self.error = (
+                        f"Export timed out after {hard_timeout // 60} minutes and was cancelled. "
+                        "This is very likely a GEE compute quota issue, not a problem with your inputs. "
+                        "Check code.earthengine.google.com/tasks for details."
+                    )
+                    return False
+
+                time.sleep(poll_interval)
+                elapsed_seconds += poll_interval
 
             status = task.status()
             if status['state'] != 'COMPLETED':
