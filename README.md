@@ -128,6 +128,6 @@ The final exported shapefile contains polygon features with two attributes:
 
 ## License
 
-This project is licensed under the MIT License, see the LINCENSE file for details.
+This project is licensed under the MIT License, see the LICENSE file for details.
 
 ---
