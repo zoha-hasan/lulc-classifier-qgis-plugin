@@ -48,6 +48,7 @@ Manually classifying land cover in GEE for a new study area means rebuilding the
 
 ![Composite](image-1.png)
 ![Classified layers on QGIS processed by Google Earth Engine](image.png)
+![LULC export](image-2.png)
 
 - Water and vegetation classification proved reliable across tested terrains (flat urban, river valley, high-elevation) with only minor threshold adjustment.
 - Built-up vs. bare soil separation was the most difficult boundary, requiring the most iterative threshold tuning and still showing some residual misclassification in mixed/informal settlement areas.
