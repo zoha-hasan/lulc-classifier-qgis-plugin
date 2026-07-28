@@ -46,8 +46,8 @@ Manually classifying land cover in GEE for a new study area means rebuilding the
 
 ## Results / Key Findings
 
-![Composite](image-1.png)
-![Classified layers on QGIS processed by Google Earth Engine](image.png)
+!(![Composite](image.png))
+![Classified layers processed by GEE](image-1.png)
 ![LULC export](image-2.png)
 
 - Water and vegetation classification proved reliable across tested terrains (flat urban, river valley, high-elevation) with only minor threshold adjustment.
