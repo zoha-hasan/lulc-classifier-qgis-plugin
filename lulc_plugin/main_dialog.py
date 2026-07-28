@@ -6,6 +6,7 @@ from qgis.gui import QgsFileWidget
 from qgis.core import QgsProject, QgsRasterLayer, QgsVectorLayer, QgsApplication
 from qgis.PyQt.QtCore import pyqtSignal, QDate
 from qgis.gui import QgsDateEdit
+import os
 
 from .settings_dialog import SettingsDialog, credentials_are_saved
 from .threshold_widget import ThresholdRow
@@ -169,7 +170,7 @@ class MainDockWidget(QDockWidget):
         self.shp_widget.setFilter("Shapefiles (*.shp)")
         layout.addWidget(self.shp_widget)
 
-        layout.addWidget(QLabel("Output folder (where the exported shapefile will be saved):"))
+        layout.addWidget(QLabel("Output folder (where the exported raster will be saved):"))
         self.output_widget = QgsFileWidget()
         self.output_widget.setStorageMode(QgsFileWidget.GetDirectory)
         layout.addWidget(self.output_widget)
@@ -331,7 +332,7 @@ class MainDockWidget(QDockWidget):
     def _run_export(self):
         self.stage = 'processing'
         self._apply_stage_state()
-        self.progress_label.setText("Calculating vector export...")
+        self.progress_label.setText("Calculating classification export...")
 
         aoi = self._get_aoi()
         start_date = self.start_date_widget.date().toString("yyyy-MM-dd")
@@ -382,14 +383,18 @@ class MainDockWidget(QDockWidget):
             self.stage = 'preview_ready'
             self._apply_stage_state()
 
-        else:  # export mode finished
+        else: 
             tif_path = result_data
             layer = QgsRasterLayer(tif_path, "LULC Classification")
             if layer.isValid():
+                style_path = os.path.join(os.path.dirname(__file__), "lulc_style.qml")
+                if os.path.exists(style_path):
+                    layer.loadNamedStyle(style_path)
+                    layer.triggerRepaint()
                 QgsProject.instance().addMapLayer(layer)
                 QMessageBox.information(self, "Success", "Export complete and loaded into QGIS.")
             else:
                 QMessageBox.critical(self, "Error", "Downloaded raster could not be loaded.")
 
-            self.stage = 'preview_ready'  # allow re-export or edit inputs again
+            self.stage = 'preview_ready' 
             self._apply_stage_state()

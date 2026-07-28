@@ -32,7 +32,7 @@ class ClassificationTask(QgsTask):
                 self.progress_signal.emit(msg)
 
             if self.mode == 'export':
-                report("Calculating vector export...")
+                report("Calculating classification export...")
 
             masks = run_classification(
                 self.aoi, self.start_date, self.end_date,
