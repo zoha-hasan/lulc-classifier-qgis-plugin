@@ -27,7 +27,7 @@ Manually classifying land cover in GEE for a new study area means rebuilding the
 - **Processing platform:** Google Earth Engine (Python API)
 - **GIS platform:** QGIS 3.x
 - **Language:** Python (PyQt for the plugin interface, Earth Engine Python API for processing)
-- **Storage/export:** Google Drive API (for retrieving GEE export output)
+- **Export:** Earth Engine's direct download URL (no external storage service required)
 
 ---
 
@@ -64,6 +64,8 @@ Manually classifying land cover in GEE for a new study area means rebuilding the
 - **No temporal analysis:** by design, this uses a single composite period, which limits how well agriculture can be separated from natural vegetation.
 - **Per-user GEE setup required:** each user needs their own free Google Earth Engine and Google Cloud credentials, since these can't be bundled into the plugin.
 - **Compute quota:** free-tier Earth Engine accounts have a compute quota; heavy repeated testing in a short window can temporarily throttle or stall processing.
+- **Compute quota:** free-tier Earth Engine accounts have a compute quota; heavy repeated testing in a short window can temporarily stop or stall processing.
+- **Export size:** exports are downloaded directly from Earth Engine rather than routed through Google Drive; very large study areas with many polygons may need a coarser scale to stay within what a direct download can handle.
 
 ---
 
@@ -72,8 +74,7 @@ Manually classifying land cover in GEE for a new study area means rebuilding the
 ### Requirements
 - QGIS 3.x
 - A free Google Earth Engine account
-- A Google Cloud project with the Earth Engine API and Google Drive API enabled
-- A Google Drive account (for temporary export storage)
+- A Google Cloud project with the Earth Engine API enabled
 
 ### One-time setup
 
@@ -84,14 +85,14 @@ Go to [signup.earthengine.google.com](https://signup.earthengine.google.com) and
 1. Go to [console.cloud.google.com](https://console.cloud.google.com).
 2. Create a new project (or use an existing one).
 3. Search for and enable the **Earth Engine API**.
-4. Search for and enable the **Google Drive API**.
-5. Go to *IAM & Admin → Service Accounts* → create a new service account.
-6. Create a **JSON key** for that service account and download it. Keep this file private, treat it like a password.
+4. Go to *IAM & Admin → Service Accounts* → create a new service account.
+5. Create a **JSON key** for that service account and download it. Keep this file private — treat it like a password.
 
-**3. Create a Google Drive folder for exports**
-1. In your own Google Drive, create a new folder (e.g. `GEE_LULC_exports`).
-2. Right-click the folder → **Share** → add your service account's email address (found in the JSON key file, looks like `xxxx@yyyy.iam.gserviceaccount.com`) with **Editor** access.
-3. Note the folder's name and make sure it's unique within your Drive, since the plugin finds it by name.
+**3. Enter your credentials into the plugin**
+1. Install and enable the plugin in QGIS (see below).
+2. Open the plugin and click **Settings**.
+3. Enter your service account email and the path to your JSON key file.
+4. Click **Save** — this only needs to be done once.
 
 **4. Enter your credentials into the plugin**
 1. Install and enable the plugin in QGIS (steps below).
@@ -110,7 +111,7 @@ Go to [signup.earthengine.google.com](https://signup.earthengine.google.com) and
 
 **Python package requirements:** install into QGIS's own Python environment (not your system Python):
 ```
-"C:\Program Files\QGIS 3.44.1\apps\Python312\python.exe" -m pip install earthengine-api google-api-python-client google-auth
+"C:\Program Files\QGIS 3.44.1\apps\Python312\python.exe" -m pip install earthengine-api
 ```
 (Adjust the path to match your actual QGIS installation and version. Run this on system command prompt.)
 
