@@ -16,7 +16,7 @@ Manually classifying land cover in GEE for a new study area means rebuilding the
 - Builds a cloud-masked Sentinel-2 composite for that area and date range on Google Earth Engine's servers.
 - Classifies every pixel into one of five classes: **water, vegetation, built-up, bare soil, and snow**.
 - Displays a live preview of each class as a layer in QGIS before anything is exported.
-- On confirmation, combines the classification into one layer, converts it to vector polygons, and exports it as a shapefile, loaded automatically back into QGIS.
+- On confirmation, combines the classification into one layer, exports it as a classified raster (GeoTIFF), loaded automatically back into QGIS.
 - Lets the user pick a terrain profile (Plain/Hilly or High Elevation) with different default thresholds, and manually edit any threshold if the defaults don't fit their area.
 
 ---
@@ -53,6 +53,7 @@ Manually classifying land cover in GEE for a new study area means rebuilding the
 - Water and vegetation classification proved reliable across tested terrains (flat urban, river valley, high-elevation) with only minor threshold adjustment.
 - Built-up vs. bare soil separation was the most difficult boundary, requiring the most iterative threshold tuning and still showing some residual misclassification in mixed/informal settlement areas.
 - Distinguishing agriculture from natural vegetation using single-date imagery (no temporal analysis) was tested with NDVI intensity bands, NDRE, and NDTI, but found unreliable enough that it was excluded from the final classification so vegetation is reported as one combined class.
+- Vectorizing the classification into polygons was tested but abandoned: at 10m resolution, cloud-gap noise and speckled classification fragments produced a very large number of small, irregular shapes, which caused geometry errors during the raster to vector conversion. The final export was switched to a classified raster (GeoTIFF) instead, which avoids this issue entirely.
 
 ---
 
@@ -65,8 +66,7 @@ Manually classifying land cover in GEE for a new study area means rebuilding the
 - **No temporal analysis:** by design, this uses a single composite period, which limits how well agriculture can be separated from natural vegetation.
 - **Per-user GEE setup required:** each user needs their own free Google Earth Engine and Google Cloud credentials, since these can't be bundled into the plugin.
 - **Compute quota:** free-tier Earth Engine accounts have a compute quota; heavy repeated testing in a short window can temporarily throttle or stall processing.
-- **Compute quota:** free-tier Earth Engine accounts have a compute quota; heavy repeated testing in a short window can temporarily stop or stall processing.
-- **Export size:** exports are downloaded directly from Earth Engine rather than routed through Google Drive; very large study areas with many polygons may need a coarser scale to stay within what a direct download can handle.
+- **Export size:** the classification raster is downloaded directly from Earth Engine as a GeoTIFF; very large study areas at full 10m resolution may produce a large file and take longer to download.
 
 ---
 
@@ -122,13 +122,17 @@ Go to [signup.earthengine.google.com](https://signup.earthengine.google.com) and
 3. **Thresholds page:** choose a terrain type, leave "Use default values" checked or edit thresholds manually, then click **Run**.
 4. The plugin processes in the background with a live progress label; QGIS remains usable while it runs.
 5. Once done, six preview layers appear (composite + five classes). Inspect them freely.
-6. Click **Export** to produce the final shapefile, or **Edit Inputs** to adjust and re-run.
+6. Click **Export** to produce the final raster, or **Edit Inputs** to adjust and re-run.
 
 ### Output
-The exported shapefile contains polygon features with two attributes:
-- `class:` numeric code (1 = Water, 2 = Vegetation, 3 = Built-up, 4 = Bare Soil, 5 = Snow)
-- `class_name:` the same classes as readable text
+The export is a single-band classified raster (GeoTIFF). Each pixel holds a numeric value corresponding to its class:
+- 1 = Water
+- 2 = Vegetation
+- 3 = Built-up
+- 4 = Bare Soil
+- 5 = Snow
 
+QGIS loads the raster as a plain single-band raster by default, showing a grayscale gradient of these numbers rather than distinct colors or labels. To view it properly styled by class, apply a Paletted/Unique values renderer (Layer Properties → Symbology) and assign each value (1–5) a color and label matching the list above.
 ---
 
 ## License
