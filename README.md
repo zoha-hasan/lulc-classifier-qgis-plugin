@@ -46,7 +46,7 @@ Manually classifying land cover in GEE for a new study area means rebuilding the
 
 ## Results / Key Findings
 
-!(![Composite](image.png))
+![Composite](image.png)
 ![Classified layers processed by GEE](image-1.png)
 ![LULC export](image-2.png)
 
