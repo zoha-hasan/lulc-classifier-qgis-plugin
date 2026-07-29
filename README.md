@@ -41,6 +41,7 @@ Manually classifying land cover in GEE for a new study area means rebuilding the
 - **Snow:** Normalized Difference Snow Index (NDSI) combined with a near-infrared brightness floor, since NDSI alone cannot distinguish snow from water (as they share the same formula).
 - **Terrain-dependent processing order:** built-up and vegetation are evaluated in a different order depending on terrain type, since mixed rural pixels (trees near buildings) behave differently in flat vs. high-elevation areas.
 - All thresholds are exposed to the user as editable `>`/`<`/`=` conditions rather than hardcoded, since no single set of values generalizes perfectly across different landscapes.
+- **Export tiling:** Earth Engine's direct download has a 50MB per-request limit. For study areas where the full-resolution classification would exceed this, the export is automatically split into a grid of smaller tiles, downloaded individually, and mosaicked into one seamless GeoTIFF using GDAL, so output resolution stays at the full 10m regardless of area size, rather than being coarsened to fit under the limit.
 
 ---
 
@@ -66,7 +67,7 @@ Manually classifying land cover in GEE for a new study area means rebuilding the
 - **No temporal analysis:** by design, this uses a single composite period, which limits how well agriculture can be separated from natural vegetation.
 - **Per-user GEE setup required:** each user needs their own free Google Earth Engine and Google Cloud credentials, since these can't be bundled into the plugin.
 - **Compute quota:** free-tier Earth Engine accounts have a compute quota; heavy repeated testing in a short window can temporarily throttle or stall processing.
-- **Export size:** the classification raster is downloaded directly from Earth Engine as a GeoTIFF; very large study areas at full 10m resolution may produce a large file and take longer to download.
+- **Export tiling seams:** for larger study areas that require tiled export, tile boundaries are mosaicked using GDAL, in a few cases very minor seams may be visible at tile edges.
 
 ---
 
@@ -95,11 +96,6 @@ Go to [signup.earthengine.google.com](https://signup.earthengine.google.com) and
 3. Enter your service account email and the path to your JSON key file.
 4. Click **Save** — this only needs to be done once.
 
-**4. Enter your credentials into the plugin**
-1. Install and enable the plugin in QGIS (steps below).
-2. Open the plugin and click the **Settings** button in the plugin window.
-3. Enter your service account email, the path to your JSON key file, and your Google Drive folder name.
-4. Click **Save**, this only needs to be done once.
 
 ### Installing the plugin
 1. Download or clone this repository.
@@ -125,13 +121,14 @@ Go to [signup.earthengine.google.com](https://signup.earthengine.google.com) and
 6. Click **Export** to produce the final raster, or **Edit Inputs** to adjust and re-run.
 
 ### Output
-The export is a single-band classified raster (GeoTIFF). Each pixel holds a numeric value corresponding to its class:
+The export is a single-band classified raster (GeoTIFF), automatically styled and colored when loaded into QGIS using a style file. Each pixel holds a numeric value corresponding to its class:
 - 1 = Water
 - 2 = Vegetation
 - 3 = Built-up
 - 4 = Bare Soil
-- 5 = Snow  
-QGIS loads the raster as a plain single-band raster by default, showing a grayscale gradient of these numbers rather than distinct colors or labels. To view it properly styled by class, apply a Paletted/Unique values renderer (Layer Properties → Symbology) and assign each value (1–5) a color and label matching the list above.
+- 5 = Snow
+
+If the style file is missing or the layer is opened separately outside the plugin, it will display as a plain grayscale raster, apply a Paletted/Unique values renderer (Layer Properties → Symbology) and assign each value a color/label matching the list above to restore the styled view.
 ---
 
 ## License
