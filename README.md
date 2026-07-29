@@ -131,7 +131,6 @@ The export is a single-band classified raster (GeoTIFF). Each pixel holds a nume
 - 3 = Built-up
 - 4 = Bare Soil
 - 5 = Snow
-
 QGIS loads the raster as a plain single-band raster by default, showing a grayscale gradient of these numbers rather than distinct colors or labels. To view it properly styled by class, apply a Paletted/Unique values renderer (Layer Properties → Symbology) and assign each value (1–5) a color and label matching the list above.
 ---
 
