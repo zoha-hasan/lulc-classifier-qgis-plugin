@@ -1,7 +1,6 @@
 import time
 import datetime
 import os
-import zipfile
 import urllib.request
 import ee
 from qgis.core import QgsTask, QgsProject, QgsVectorLayer
@@ -54,22 +53,61 @@ class ClassificationTask(QgsTask):
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             export_filename = f"lulc_classification_{timestamp}"
 
-            report("Requesting direct download from Earth Engine...")
-            download_url = classified_cleaned.getDownloadURL({
-                'name': export_filename,
-                'scale': 10,
-                'region': self.aoi,
-                'format': 'GEO_TIFF',
-                'crs': 'EPSG:4326'
-            })
+            report("Calculating export tiles...")
+            bounds = self.aoi.bounds().getInfo()['coordinates'][0]
+            lons = [pt[0] for pt in bounds]
+            lats = [pt[1] for pt in bounds]
+            xmin, xmax = min(lons), max(lons)
+            ymin, ymax = min(lats), max(lats)
 
-            report("Downloading classification raster...")
-            tif_path = os.path.join(self.output_folder, f"{export_filename}.tif")
-            urllib.request.urlretrieve(download_url, tif_path)
+            area_m2 = self.aoi.area(1).getInfo()
+            max_bytes = 50331648 * 0.85
+            bytes_per_pixel = 2
+            max_pixels_per_tile = max_bytes / bytes_per_pixel
+            total_pixels_est = area_m2 / (10 * 10)
+            num_tiles = max(1, int((total_pixels_est / max_pixels_per_tile) ** 0.5) + 1)
+
+            report(f"Splitting into {num_tiles}x{num_tiles} tiles at full resolution...")
+
+            x_step = (xmax - xmin) / num_tiles
+            y_step = (ymax - ymin) / num_tiles
+
+            tile_folder = os.path.join(self.output_folder, export_filename)
+            os.makedirs(tile_folder, exist_ok=True)
+            tile_paths = []
+
+            tile_num = 0
+            for i in range(num_tiles):
+                for j in range(num_tiles):
+                    tile_num += 1
+                    report(f"Downloading tile {tile_num} of {num_tiles * num_tiles}...")
+
+                    tile_geom = ee.Geometry.Rectangle([
+                        xmin + i * x_step, ymin + j * y_step,
+                        xmin + (i + 1) * x_step, ymin + (j + 1) * y_step
+                    ])
+
+                    tile_download_url = classified_cleaned.clip(tile_geom).getDownloadURL({
+                        'name': f"tile_{i}_{j}",
+                        'scale': 10,
+                        'region': tile_geom,
+                        'format': 'GEO_TIFF',
+                        'crs': 'EPSG:4326'
+                    })
+
+                    tile_path = os.path.join(tile_folder, f"tile_{i}_{j}.tif")
+                    urllib.request.urlretrieve(tile_download_url, tile_path)
+                    tile_paths.append(tile_path)
+
+            report("Merging tiles into final raster...")
+            from osgeo import gdal
+            merged_path = os.path.join(self.output_folder, f"{export_filename}.tif")
+            gdal.Warp(merged_path, tile_paths)
 
             report("Loading raster into QGIS...")
-            self.result_data = tif_path
+            self.result_data = merged_path
             return True
+
 
         except Exception as e:
             self.error = str(e)
