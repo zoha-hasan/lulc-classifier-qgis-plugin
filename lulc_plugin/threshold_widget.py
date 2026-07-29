@@ -22,11 +22,10 @@ class ThresholdRow(QWidget):
 
         self.setLayout(layout)
 
-    def set_editable(self, editable):
+    def set_editable(self, editable, force_default=False):
         self.operator_box.setEnabled(editable)
         self.value_input.setEnabled(editable)
-        if not editable:
-            # Force back to defaults whenever locked
+        if force_default:
             self.operator_box.setCurrentText(self.default_operator)
             self.value_input.setText(str(self.default_value))
 

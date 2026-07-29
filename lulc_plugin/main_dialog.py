@@ -271,7 +271,7 @@ class MainDockWidget(QDockWidget):
     def _toggle_threshold_editing(self):
         editable = not self.use_default_checkbox.isChecked()
         for row in self.threshold_rows.values():
-            row.set_editable(editable)
+            row.set_editable(editable, force_default=not editable)
 
     def _get_current_terrain_key(self):
         return 'plain' if self.terrain_dropdown.currentIndex() == 0 else 'high_elevation'
@@ -282,7 +282,7 @@ class MainDockWidget(QDockWidget):
             row.default_operator = profile[key][0]
             row.default_value = profile[key][1]
             if self.use_default_checkbox.isChecked():
-                row.set_editable(False)
+                row.set_editable(False, force_default=True)
 
     def _collect_thresholds(self):
         result = {}
