@@ -126,8 +126,7 @@ The export is a single-band classified raster (GeoTIFF), automatically styled an
 - 2 = Vegetation
 - 3 = Built-up
 - 4 = Bare Soil
-- 5 = Snow
-
+- 5 = Snow  \
 If the style file is missing or the layer is opened separately outside the plugin, it will display as a plain grayscale raster, apply a Paletted/Unique values renderer (Layer Properties → Symbology) and assign each value a color/label matching the list above to restore the styled view.
 ---
 
