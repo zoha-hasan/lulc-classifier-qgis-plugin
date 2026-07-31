@@ -73,44 +73,69 @@ Manually classifying land cover in GEE for a new study area means rebuilding the
 
 ## How to run it
 
-### Requirements
-- QGIS 3.x
-- A free Google Earth Engine account
-- A Google Cloud project with the Earth Engine API enabled
+This section is for anyone who just wants to **use** the plugin. If you want to edit its code, see [For Developers](#for-developers) below.
 
-### One-time setup
+### Requirements
+- QGIS 3.x and Google Cloud project with the Earth Engine API enabled (set up is mentioned below if you don't have these)
+- A free Google Earth Engine account
+
+No prior Python or programming experience is required, and no separate Python installation is needed, QGIS comes with its own bundled Python that the plugin runs on.
+
+### Step 1: Install QGIS
+1. Go to [qgis.org](https://qgis.org/en/site/forusers/download.html) and download the installer for your operating system. The **Long Term Release (LTR)** version is the safest default choice.
+2. Run the installer with default settings.
+3. Open QGIS once to confirm it launches correctly.
+
+### Step 2: Set up Google Earth Engine access
+This is a one-time setup tied to your Google account. It's required because the plugin uses Google's servers to process satellite imagery.
 
 **1. Create a Google Earth Engine account**
 Go to [signup.earthengine.google.com](https://signup.earthengine.google.com) and sign up (free, for noncommercial/research use).
 
-**2. Create a Google Cloud service account**
+**2. Create a dedicated Google Cloud project**
 1. Go to [console.cloud.google.com](https://console.cloud.google.com).
-2. Create a new project (or use an existing one).
-3. Search for and enable the **Earth Engine API**.
-4. Go to *IAM & Admin → Service Accounts* → create a new service account.
-5. Create a **JSON key** for that service account and download it. Keep this file private — treat it like a password.
+2. Create a **new** project specifically for this or use an old project, do not use the account's auto-created "default" project, as it is often not properly registered for Earth Engine use, which can cause errors later.
+3. Search for and enable the **Earth Engine API** for this project.
+4. Go to [code.earthengine.google.com](https://code.earthengine.google.com) while logged into the same Google account, and make sure the project is fully registered for Earth Engine (it should open the code editor with no registration prompt or banner). If you see a registration prompt, complete it before continuing.
 
-**3. Enter your credentials into the plugin**
-1. Install and enable the plugin in QGIS (see below).
-2. Open the plugin and click **Settings**.
-3. Enter your service account email and the path to your JSON key file.
-4. Click **Save** — this only needs to be done once.
+**3. Create a service account and key**
+1. In the same Cloud project, go to *IAM & Admin → Service Accounts* → create a new service account.
+2. Create a **JSON key** for that service account and download it. Keep this file private, treat it like a password.
 
-
-### Installing the plugin
-1. Download or clone this repository.
-2. Copy the plugin folder into your QGIS plugins directory:
+### Step 3: Install the plugin
+1. Go to this repository's GitHub page, click the green **Code** button → **Download ZIP**.
+2. Extract the ZIP file.
+3. Copy the plugin's folder into your QGIS plugins directory:
    - **Windows:** `%APPDATA%\QGIS\QGIS3\profiles\default\python\plugins\`
    - **macOS:** `~/Library/Application Support/QGIS/QGIS3/profiles/default/python/plugins/`
    - **Linux:** `~/.local/share/QGIS/QGIS3/profiles/default/python/plugins/`
-3. Open QGIS → *Plugins → Manage and Install Plugins → Installed* → check the box next to **LULC Classifier** to enable it.
-4. A new toolbar icon and a *Plugins → LULC Classifier* menu entry will appear.
+4. Open QGIS → *Plugins → Manage and Install Plugins → Installed* → check the box next to **LULC Classifier** to enable it.
+5. A new toolbar icon and a *Plugins → LULC Classifier* menu entry will appear.
 
-**Python package requirements:** install into QGIS's own Python environment (not your system Python):
-```
-"C:\Program Files\QGIS 3.44.1\apps\Python312\python.exe" -m pip install earthengine-api
-```
-(Adjust the path to match your actual QGIS installation and version. Run this on system command prompt.)
+### Step 4: Install the required Python package
+The plugin needs one additional Python package (`earthengine-api`) installed into QGIS's own Python environment.
+
+**Recommended method: OSGeo4W Shell:**
+OSGeo4W Shell is installed automatically alongside QGIS and already points to QGIS's own Python and pip, with no need to locate or type any file paths.
+1. Open the Start Menu and look for **OSGeo4W Shell** (installed together with QGIS).
+2. Run:
+   ```
+   pip install earthengine-api
+   ```
+
+*(Alternative, not recommended unless OSGeo4W Shell isn't available: open a regular command prompt and run `"<path to your QGIS Python>\python.exe" -m pip install earthengine-api`, replacing the path with your actual QGIS installation folder and version, this path differs between QGIS versions, which is why OSGeo4W Shell is the more reliable option.)*
+
+### Step 5: Enter your credentials into the plugin
+1. Click the **LULC Classifier** toolbar icon or menu entry to open the plugin.
+2. Click **Settings**.
+3. Enter your service account email and the path to your JSON key file (both from Step 2).
+4. Click **Save**, this only needs to be done once as QGIS remembers it for future sessions.
+
+### Step 6: Verify everything works
+1. On the Inputs page, select a small test study area shapefile (in WGS84/EPSG:4326), an output folder, a short date range, and a cloud cover percentage.
+2. Click **Next**, then **Run**.
+3. Confirm the dock panel shows live progress messages and that preview layers appear on the map without errors, this confirms the plugin, Earth Engine access, and credentials are all working correctly.
+4. Only after Preview succeeds, try **Export** to confirm the full pipeline including raster download works too.
 
 ### Usage
 1. Click the **LULC Classifier** toolbar icon or menu entry and a dockable panel opens.
@@ -126,8 +151,60 @@ The export is a single-band classified raster (GeoTIFF), automatically styled an
 - 2 = Vegetation
 - 3 = Built-up
 - 4 = Bare Soil
-- 5 = Snow  
+- 5 = Snow
+
 If the style file is missing or the layer is opened separately outside the plugin, it will display as a plain grayscale raster, apply a Paletted/Unique values renderer (Layer Properties → Symbology) and assign each value a color/label matching the list above to restore the styled view.
+
+### Troubleshooting
+
+**`WordRegex object has no attribute 'set_name'` or similar errors after installing the package, or the plugin appears in the list but does nothing when clicked:**
+This indicates a `pyparsing` version conflict introduced by installing `earthengine-api`. Fix by running the following in OSGeo4W Shell, then restarting QGIS:
+```
+pip install --upgrade pyparsing
+```
+
+**400 Bad Request when exporting, but Preview works fine:**
+This usually means the Google Cloud project tied to your service account has the Earth Engine API enabled but was never registered for Earth Engine use (see Step 2 above). Visit [code.earthengine.google.com](https://code.earthengine.google.com) while logged into that account, if it prompts you to register/enable Earth Engine for the project, complete that step, then try again. Avoid using a Cloud project's auto-created "default" project for this, create a dedicated project or use an old one instead.
+
+---
+
+## For Developers
+
+This section is for anyone who wants to modify the plugin's code, not just run it. It assumes you've already completed the Google Earth Engine setup (Step 2 above).
+
+### Step 1: Install VS Code
+Download from [code.visualstudio.com](https://code.visualstudio.com) and install with default settings.
+
+### Step 2: Install the Python extension
+In VS Code, open the Extensions panel (`Ctrl+Shift+X`), search for **Python** (by Microsoft), and install it. **Pylance** (autocomplete support) installs automatically alongside it.
+
+### Step 3: Point VS Code at QGIS's Python interpreter
+This step is only for getting accurate autocomplete/IntelliSense on `qgis` and `ee` imports, it does not affect how the plugin actually runs, since QGIS always launches the plugin itself, never VS Code's Run/Debug button.
+1. Open the plugin's folder in VS Code (`File → Open Folder`).
+2. `Ctrl+Shift+P` → **"Python: Select Interpreter"**.
+3. Select QGIS's bundled Python if it appears in the list, or choose "Enter interpreter path" and browse to it manually (e.g. `C:\Program Files\QGIS 3.44.1\apps\Python312\python.exe` on Windows, adjust for your installed version).
+
+### Step 4: Symlink the plugin folder instead of copying it
+If you've already copied the plugin folder into QGIS's plugins directory as an end user, delete that copy first, you can't symlink over an existing folder. Symlinking makes QGIS's plugins folder point directly at your VS Code project folder, so code edits take effect immediately without manually re-copying files each time.
+
+**Windows (Command Prompt as Administrator):**
+```
+mklink /D "%APPDATA%\QGIS\QGIS3\profiles\default\python\plugins\lulc_plugin" "C:\path\to\your\vscode\project\lulc_plugin"
+```
+Replace the second path with wherever you keep the project in VS Code.
+
+### Step 5: Install Plugin Reloader
+In QGIS: `Plugins → Manage and Install Plugins → search "Plugin Reloader" → Install`. After editing code in VS Code and saving, click the Plugin Reloader button in QGIS instead of restarting the whole application to see your changes.
+
+### Verifying the developer setup
+1. `Ctrl+Shift+P` → "Python: Select Interpreter", confirm QGIS's Python is selected without error.
+2. Open any plugin `.py` file and type `import ee` and `from qgis.core import QgsProject`, confirm neither shows a red underline.
+3. Make a small, visible change to the plugin (e.g. change a label's text in `main_dialog.py`), save, click Plugin Reloader in QGIS, and confirm the change appears, this confirms the symlink is correctly connected.
+
+### Debugging
+- `print()` statements show up in QGIS's Python Console.
+- Use `QgsMessageLog.logMessage()` for messages that appear in QGIS's Log Messages Panel (`View → Panels → Log Messages Panel`) if errors appear, it's more reliable for catching full error tracebacks than the small popup dialogs. If you recieve an error for all data not appearing through the earthengine-api as a yellow banner, that is normal, anything else should be checked though.
+
 ---
 
 ## License
